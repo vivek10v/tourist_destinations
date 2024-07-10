@@ -1,0 +1,71 @@
+{% comment %} {% extends 'base.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">Profile</h5>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-row">
+                {{ profile_form.as_p }}
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">Projects</h5>
+        <a href="{% url 'add_project' %}" class="btn btn-link">Add Project</a>
+        <ul class="list-group">
+            {% for project in projects %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ project.title }}: {{ project.description }}
+                    <div>
+                        <a href="{% url 'edit_project' project.pk %}" class="btn btn-sm btn-primary">Edit</a>
+                        <form action="{% url 'delete_project' project.pk %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div> {% endcomment %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Profile</title>
+</head>
+<body>
+    <h2>Profile</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ profile_form.as_p }}
+        <button type="submit">Save</button>
+    </form>
+
+    <h2>Destinations</h2>
+    <a href="{% url 'create_destination' %}">Add Destination</a>
+    <ul>
+        {% for destination in destinations %}
+        <li>
+            {{ destination.place_name }}
+            <a href="{% url 'destination_fetch' destination.id %}">Edit</a>
+            <a href="{% url 'destination_delete' destination.id %}">Delete</a>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
+
+{% comment %} {% endblock %} {% endcomment %}
