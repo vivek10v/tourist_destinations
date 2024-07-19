@@ -1,3 +1,4 @@
+from django.http import HttpResponseNotFound
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate
@@ -16,22 +17,22 @@ import requests
 
 # Create your views here.
 
-# class DestinationCreateView(generics.ListCreateAPIView):
-#     queryset = Destination.objects.all()
-#     serializer_class = DestinationSerializer
-#     permission_classes = [AllowAny]
+class DestinationCreateView(generics.ListCreateAPIView):
+    queryset = Destination.objects.all()
+    serializer_class = DestinationSerializer
+    permission_classes = [AllowAny]
     
-# class DestinationDetails(generics.RetrieveAPIView):
-#     queryset = Destination.objects.all()
-#     serializer_class = DestinationSerializer
+class DestinationDetails(generics.RetrieveAPIView):
+    queryset = Destination.objects.all()
+    serializer_class = DestinationSerializer
     
-# class DestinationUpdateView(generics.RetrieveUpdateAPIView):
-#     queryset = Destination.objects.all()
-#     serializer_class = DestinationSerializer
+class DestinationUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = Destination.objects.all()
+    serializer_class = DestinationSerializer
     
-# class DestinationDetailsDelete(generics.DestroyAPIView):
-#     queryset = Destination.objects.all()
-#     serializer_class = DestinationSerializer
+class DestinationDetailsDelete(generics.DestroyAPIView):
+    queryset = Destination.objects.all()
+    serializer_class = DestinationSerializer
 
 def Reg_user(request):
     
@@ -136,15 +137,19 @@ def create_destination(request):
 
 def destination_fetch(request, id):
     api_url=f'http://127.0.0.1:8000/detail/{id}'
-    response = requests.get(api_url)
+    response = requests.post(api_url)
     print(response.status_code)
+    print(response)
+    print(response.json())
     if response.status_code == 200:
         data =  response.json()
-    return render(request, 'profiles/update_destination.html',{'destination':data})
+        return render(request, 'profiles/update_destination.html',{'destination':data})
+    else:       
+        return HttpResponseNotFound("Destination not found")
 
 def destination_delete(request, id):
     api_url=f'http://127.0.0.1:8000/delete/{id}'
-    response = requests.get(api_url)
+    response = requests.post(api_url)
     print(response.status_code)
     if response.status_code == 200:
         print(f'Destion of {id} has been deleted')
@@ -173,8 +178,7 @@ def destination_update(request, id):
         else:
             messages.error(request, 'Form is not valid')
     else:
-        # Fetch existing data from API for the form
-        response = request.GET(api_url)
+        response = requests.get(api_url)
         if response.status_code == 200:
             data = response.json()
             form = DestinationForm(initial=data)
@@ -184,4 +188,14 @@ def destination_update(request, id):
     
     return render(request, 'profiles/update_destination.html', {'form': form, 'id': id})
 
-    
+# def destination_fetch(request, id):
+#     destination = get_object_or_404(Destination, id=id)
+#     if request.method == 'POST':
+#         form = DestinationForm(request.POST, request.FILES, instance=destination)
+#         if form.is_valid():
+#             form.save()
+#             return redirect('profile') 
+#     else:
+#         form = DestinationForm(instance=destination)
+
+#     return render(request, 'profiles/update_destination.html', {'form': form})
