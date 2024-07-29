@@ -13,7 +13,11 @@ urlpatterns = [
     path('delete/<int:pk>', DestinationDetailsDelete.as_view, name="delete-destination"),
     
     path('create_destination/', views.create_destination, name='create_destination'),
-    path('destination_fetch/<int:id>/', views.destination_fetch, name='destination_fetch'),
-    path('update_destination/<int:id>/', views.destination_update, name='update_destination'),
-    path('destination_delete/<int:id>', views.destination_delete, name='destination_delete'),
+    path('update_destination/<int:pk>/', views.destination_update, name='update_destination'),
+    path('destination_delete/<int:pk>/', views.destination_delete, name='destination_delete'),
+    
+    # path('create_destination/', views.create_destination, name='create_destination'),
+    # path('destination_fetch/<int:id>/', views.destination_fetch, name='destination_fetch'),
+    # path('update_destination/<int:id>/', views.destination_update, name='update_destination'),
+    # path('destination_delete/<int:id>', views.destination_delete, name='destination_delete'),
 ]

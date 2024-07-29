@@ -14,6 +14,8 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from .forms import *
 import requests
+from django.core.paginator import Paginator
+from django.db.models import Q
 
 # Create your views here.
 
@@ -100,102 +102,140 @@ def profile_view(request):
     else:
         profile_form = ProfileForm(instance=profile)
         
-    destinations = Destination.objects.all()
+    query = request.GET.get('search')
+    if query:
+        destinations = Destination.objects.filter(
+            Q(place_name__icontains=query)
+        )
+    else:
+        
+        destinations = Destination.objects.all()
+    
+    paginator = Paginator(destinations, 5)
+    page_number = request.GET.get('page')
+    destination_page = paginator.get_page(page_number)
+    
+    return render(request, 'profiles/profile.html', {
+        'profile_form': profile_form,
+        'destination_page': destination_page,
+        'query': query,
+    })
 
-    return render(request, 'profiles/profile.html', {'profile_form': profile_form, 'destinations': destinations})
+    # return render(request, 'profiles/profile.html', {'profile_form': profile_form, 'destinations': destinations})
 
 def logout_view(request):
     auth_logout(request)
     return redirect('login')
 
+# def create_destination(request):
+#     if request.method == 'POST':
+#         form = DestinationForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             try:
+#                 form.save()
+#                 api_url='http://127.0.0.1:8000/create/'
+#                 data=form.cleaned_data
+#                 print(data)
+                
+#                 response = requests.post(api_url, data=data, files={'image':request.FILES['image']})
+#                 print(response.status_code)
+#                 if response.status_code == 404:
+#                     messages.success(request, 'Destination Added')
+#                     return redirect('profile')
+#                 else:
+#                     messages.error(request, f'Error{response.status_code}')
+#             except requests.RequestException as e:
+#                 messages.error(request, f'Error during API{str(e)}')
+#         else:
+#             messages.error(request, 'Form is not valid')
+            
+#     else:
+#         form=DestinationForm()
+        
+#     return render(request, 'profiles/create_destination.html', {'form':form})
+
+# def destination_fetch(request, id):
+#     api_url=f'http://127.0.0.1:8000/detail/{id}'
+#     response = requests.post(api_url)
+#     print(response.status_code)
+#     print(response)
+#     print(response.json())
+#     if response.status_code == 200:
+#         data =  response.json()
+#         return render(request, 'profiles/update_destination.html',{'destination':data})
+#     else:       
+#         return HttpResponseNotFound("Destination not found")
+
+# def destination_delete(request, id):
+#     api_url=f'http://127.0.0.1:8000/delete/{id}'
+#     response = requests.post(api_url)
+#     print(response.status_code)
+#     if response.status_code == 200:
+#         print(f'Destion of {id} has been deleted')
+#     else:
+#         print(f'Failed to delete the destination {response.status_code}')
+        
+#     return redirect('profile')
+
+# def destination_update(request, id):
+#     api_url = f'http://127.0.0.1:8000/update/{id}'
+    
+#     if request.method == 'POST':
+#         form = DestinationForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             try:
+#                 form.save()
+#                 data = form.cleaned_data
+#                 response = requests.get(api_url, data=data, files={'image': request.FILES['image']})
+#                 print(response.status_code)
+#                 if response.status_code == 200:
+#                     messages.success(request, 'Destination updated successfully')
+#                 else:
+#                     messages.error(request, f'Failed to update destination. Status code: {response.status_code}')
+#             except requests.RequestException as e:
+#                 messages.error(request, f'Error during API request: {str(e)}')
+#         else:
+#             messages.error(request, 'Form is not valid')
+#     else:
+#         response = requests.get(api_url)
+#         if response.status_code == 200:
+#             data = response.json()
+#             form = DestinationForm(initial=data)
+#         else:
+#             messages.error(request, f'Failed to fetch destination details. Status code: {response.status_code}')
+#             return redirect('profile')  
+    
+#     return render(request, 'profiles/update_destination.html', {'form': form, 'id': id})
+
 def create_destination(request):
     if request.method == 'POST':
         form = DestinationForm(request.POST, request.FILES)
         if form.is_valid():
-            try:
-                form.save()
-                api_url='http://127.0.0.1:8000/create/'
-                data=form.cleaned_data
-                print(data)
-                
-                response = requests.post(api_url, data=data, files={'image':request.FILES['image']})
-                print(response.status_code)
-                if response.status_code == 404:
-                    messages.success(request, 'Destination Added')
-                    return redirect('profile')
-                else:
-                    messages.error(request, f'Error{response.status_code}')
-            except requests.RequestException as e:
-                messages.error(request, f'Error during API{str(e)}')
-        else:
-            messages.error(request, 'Form is not valid')
-            
+            project = form.save(commit=False)
+            project.user = request.user
+            project.save()
+            return redirect('profile')
     else:
-        form=DestinationForm()
-        
-    return render(request, 'profiles/create_destination.html', {'form':form})
+        form = DestinationForm()
 
-def destination_fetch(request, id):
-    api_url=f'http://127.0.0.1:8000/detail/{id}'
-    response = requests.post(api_url)
-    print(response.status_code)
-    print(response)
-    print(response.json())
-    if response.status_code == 200:
-        data =  response.json()
-        return render(request, 'profiles/update_destination.html',{'destination':data})
-    else:       
-        return HttpResponseNotFound("Destination not found")
+    return render(request, 'profiles/create_destination.html', {'form': form})
 
-def destination_delete(request, id):
-    api_url=f'http://127.0.0.1:8000/delete/{id}'
-    response = requests.post(api_url)
-    print(response.status_code)
-    if response.status_code == 200:
-        print(f'Destion of {id} has been deleted')
-    else:
-        print(f'Failed to delete the destination {response.status_code}')
-        
-    return redirect('profile')
 
-def destination_update(request, id):
-    api_url = f'http://127.0.0.1:8000/update/{id}'
-    
+def destination_update(request, pk):
+    destination = get_object_or_404(Destination, pk=pk)
     if request.method == 'POST':
-        form = DestinationForm(request.POST, request.FILES)
+        form = DestinationForm(request.POST, request.FILES, instance=destination)
         if form.is_valid():
-            try:
-                form.save()
-                data = form.cleaned_data
-                response = requests.get(api_url, data=data, files={'image': request.FILES['image']})
-                print(response.status_code)
-                if response.status_code == 200:
-                    messages.success(request, 'Destination updated successfully')
-                else:
-                    messages.error(request, f'Failed to update destination. Status code: {response.status_code}')
-            except requests.RequestException as e:
-                messages.error(request, f'Error during API request: {str(e)}')
-        else:
-            messages.error(request, 'Form is not valid')
+            form.save()
+            return redirect('profile')
     else:
-        response = requests.get(api_url)
-        if response.status_code == 200:
-            data = response.json()
-            form = DestinationForm(initial=data)
-        else:
-            messages.error(request, f'Failed to fetch destination details. Status code: {response.status_code}')
-            return redirect('profile')  
-    
-    return render(request, 'profiles/update_destination.html', {'form': form, 'id': id})
+        form = DestinationForm(instance=destination)
+    return render(request, 'profiles/update_destination.html', {'form': form})
 
-# def destination_fetch(request, id):
-#     destination = get_object_or_404(Destination, id=id)
-#     if request.method == 'POST':
-#         form = DestinationForm(request.POST, request.FILES, instance=destination)
-#         if form.is_valid():
-#             form.save()
-#             return redirect('profile') 
-#     else:
-#         form = DestinationForm(instance=destination)
 
-#     return render(request, 'profiles/update_destination.html', {'form': form})
+def destination_delete(request, pk):
+    destination = get_object_or_404(Destination, pk=pk)
+    if request.method == 'POST':
+        destination.delete()
+        return redirect('profile')
+    return render(request, 'profiles/delete_destination.html', {'destination': destination})

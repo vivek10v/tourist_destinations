@@ -1,4 +1,4 @@
-{% comment %} {% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Profile{% endblock %}
 
@@ -9,7 +9,26 @@
         <form method="post">
             {% csrf_token %}
             <div class="form-row">
-                {{ profile_form.as_p }}
+                <div class="form-group col-md-6">
+                    <label for="first_name">First name</label>
+                    {{ profile_form.first_name }}
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="last_name">Last name</label>
+                    {{ profile_form.last_name }}
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="gender">Gender</label>
+                    {{ profile_form.gender }}
+                </div>                
+                <div class="form-group col-md-6">
+                    <label for="mobile_no">Mobile no</label>
+                    {{ profile_form.mobile_no }}
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="email">Email</label>
+                    {{ profile_form.email }}
+                </div>
             </div>
             <div class="form-group">
                 <button type="submit" class="btn btn-primary">Save</button>
@@ -18,29 +37,84 @@
     </div>
 </div>
 
-
 <div class="card mt-4">
     <div class="card-body">
-        <h5 class="card-title">Projects</h5>
-        <a href="{% url 'add_project' %}" class="btn btn-link">Add Project</a>
-        <ul class="list-group">
-            {% for project in projects %}
+        <h5 class="card-title">Destinations</h5>
+        <a href="{% url 'create_destination' %}" class="btn btn-link">Add Destination</a>
+
+        <form method="get" class="form-inline mb-3">
+            <input class="form-control mr-sm-2" type="search" name="search" value="" placeholder="Search" aria-label="Search">
+            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+        </form>
+
+        {% comment %} <ul class="list-group">
+            {% for destination in destinations %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ project.title }}: {{ project.description }}
+                    {{ destination.place_name }}
                     <div>
-                        <a href="{% url 'edit_project' project.pk %}" class="btn btn-sm btn-primary">Edit</a>
-                        <form action="{% url 'delete_project' project.pk %}" method="post" class="d-inline">
+                        
+                        <a href="{% url 'update_destination' destination.id %}" class="btn btn-sm btn-primary">Edit</a>
+                        <form action="{% url 'destination_delete' destination.id %}" method="post" class="d-inline">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                         </form>
                     </div>
                 </li>
             {% endfor %}
-        </ul>
-    </div>
-</div> {% endcomment %}
+        </ul> {% endcomment %}
 
-<!DOCTYPE html>
+        <ul class="list-group">
+            {% for destination in destination_page %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {% comment %} {{ destination.place_name }} {% endcomment %}
+                    <div class="d-flex align-items-center">
+                        {% if destination.image %}
+                            <img src="{{ destination.image.url }}" class="rounded-circle" width="50" height="50" alt="{{ destination.place_name }}">
+                        {% else %}
+                            <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;">N/A</div>
+                        {% endif %}
+                        <span class="ml-3">{{ destination.place_name }}</span>
+                    </div>
+                    <div>
+                        <a href="{% url 'update_destination' destination.id %}" class="btn btn-sm btn-primary">Edit</a>
+                        <form action="{% url 'destination_delete' destination.id %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </li>
+            {% empty %}
+                <li class="list-group-item">No destinations found.</li>
+            {% endfor %}
+        </ul>
+
+    <nav aria-label="Page navigation example">
+            <ul class="pagination">
+                {% if destination_page.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}">First</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ destination_page.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">Previous</a></li>
+                {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#">First</a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+                {% endif %}
+                
+                <li class="page-item disabled"><a class="page-link" href="#">{{ destination_page.number }} of {{ destination_page.paginator.num_pages }}</a></li>
+                
+                {% if destination_page.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ destination_page.next_page_number }}{% if query %}&q={{ query }}{% endif %}">Next</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ destination_page.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">Last</a></li>
+                {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#">Last</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}
+
+
+{% comment %} <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -60,12 +134,12 @@
         {% for destination in destinations %}
         <li>
             {{ destination.place_name }}
-            <a href="{% url 'destination_fetch' destination.id %}">Edit</a>
+            <a href="{% url 'update_destination' destination.id %}">Edit</a>
             <a href="{% url 'destination_delete' destination.id %}">Delete</a>
         </li>
         {% endfor %}
     </ul>
 </body>
-</html>
+</html> {% endcomment %}
 
-{% comment %} {% endblock %} {% endcomment %}
+
